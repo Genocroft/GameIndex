@@ -1,0 +1,81 @@
+body {
+    margin: 0;
+}
+
+.containerUpperBarRight {
+    color: white;
+    background-color: black;
+    height: 100px;
+    display: flex;
+    justify-content: flex-start;
+    gap: 30px;
+    margin-right: auto;
+    
+}
+
+.containerUpperBarLeft {
+    color: white;
+    background-color: black;
+    height: 100px;
+    display: flex;
+    justify-content: flex-start;
+    gap:  30px;
+    margin-left: auto;
+}
+
+.logo {
+    margin-left: 50px;
+}
+
+.title {
+    font-size: 50px;
+    font-style: bold;
+    justify-content: center;
+    align-items: center; 
+    display: flex;
+    cursor: pointer;
+}
+
+.helpContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid black;
+    border-radius: 40%;
+    height: 50px;
+    width: 120px;
+    margin-top: 25px;
+    background-color: red;
+    cursor: pointer
+}
+
+.help {
+    font-weight: bold;
+    color: white;
+    font-size: 20px;
+    /* margin-left: 25px; */
+}
+
+.servers form{
+   margin: 0;
+}
+
+button[name="Server_Page"] {
+
+}
+
+button[name="Server_Page"]:hover {
+
+}
+
+.account {
+   
+}
+
+.username {
+   
+}
+
+.icon {
+    margin-right: 50px;
+}
