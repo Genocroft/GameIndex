@@ -12,6 +12,13 @@ if (isset($_GET['delete'])) {
     exit;
 }
 
+// Favorite togglen
+if (isset($_GET['fav'])) {
+    $gameController->toggleFavorite($_GET['fav']);
+    header("Location: index.php"); // refresh pagina
+    exit;
+}
+
 $games = $gameController->getAllGames();
 ?>
 
@@ -46,15 +53,18 @@ $games = $gameController->getAllGames();
             <td><?= htmlspecialchars(implode(', ', $game['platforms'])) ?></td>
 
             <td>
-                <a href="GameForm.php?id=<?= $game['id'] ?>">
-                    Edit
+                <!-- Favorite ster -->
+                <a href="index.php?fav=<?= $game['id'] ?>" style="text-decoration:none; font-size:20px;">
+                    <?= $game['favorite'] ? '⭐' : '☆' ?>
                 </a>
 
                 |
 
+                <a href="GameForm.php?id=<?= $game['id'] ?>">Edit</a> |
+
                 <a href="index.php?delete=<?= $game['id'] ?>"
                    onclick="return confirm('Weet je zeker dat je deze game wilt verwijderen?')">
-                    Delete
+                   Delete
                 </a>
             </td>
         </tr>

@@ -8,11 +8,8 @@ class GameController {
 
     // CREATE
     public function createGame($titel, $genre_id, $release_datum, $platform_ids = []) {
-        //maakt een nieuwe game //
         $stmt = $this->pdo->prepare("INSERT INTO games (titel, genre_id, release_datum) VALUES (?, ?, ?)");
-    //voert de query uit met de opgegeven parameters//
         $stmt->execute([$titel, $genre_id, $release_datum]);
-        // Haal het ID van de nieuw toegevoegde game op
         $game_id = $this->pdo->lastInsertId();
 
         if (!empty($platform_ids)) {
@@ -20,7 +17,6 @@ class GameController {
             foreach ($platform_ids as $pid) {
                 $stmtPlatform->execute([$game_id, $pid]);
             }
-            //als hij leeg is of er is geen game toegevoegd, dan doet hij niks en gaat hij verder naar de volgende stap//
         }
 
         return $game_id;
@@ -29,11 +25,11 @@ class GameController {
     // READ ALL
     public function getAllGames() {
         $stmt = $this->pdo->query("
-            SELECT g.id, g.titel, g.release_datum, gen.naam AS genre
+            SELECT g.id, g.titel, g.release_datum, g.favorite, gen.naam AS genre
             FROM games g
             LEFT JOIN genres gen ON g.genre_id = gen.id
         ");
-        $games = $stmt->fetchAll();
+        $games = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         foreach ($games as &$game) {
             $stmtPlatforms = $this->pdo->prepare("
@@ -52,13 +48,13 @@ class GameController {
     // READ SINGLE
     public function getGameById($id) {
         $stmt = $this->pdo->prepare("
-            SELECT g.id, g.titel, g.release_datum, gen.naam AS genre
+            SELECT g.id, g.titel, g.release_datum, g.favorite, gen.naam AS genre
             FROM games g
             LEFT JOIN genres gen ON g.genre_id = gen.id
             WHERE g.id = ?
         ");
         $stmt->execute([$id]);
-        $game = $stmt->fetch();
+        $game = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$game) return null;
 
         $stmtPlatforms = $this->pdo->prepare("
@@ -75,20 +71,15 @@ class GameController {
 
     // UPDATE
     public function updateGame($id, $titel, $genre_id, $release_datum, $platform_ids = []) {
-        //werkt een bestaande game bij//
         $stmt = $this->pdo->prepare("UPDATE games SET titel = ?, genre_id = ?, release_datum = ? WHERE id = ?");
-        //repareert de query
         $stmt->execute([$titel, $genre_id, $release_datum, $id]);
-        //verwijdert alle bestaande platform koppelingen voor deze game//
 
         $this->pdo->prepare("DELETE FROM game_platform WHERE game_id = ?")->execute([$id]);
-        //voegt de nieuwe platform koppelingen toe//
+
         if (!empty($platform_ids)) {
             $stmtPlatform = $this->pdo->prepare("INSERT INTO game_platform (game_id, platform_id) VALUES (?, ?)");
-            //repareert de query
             foreach ($platform_ids as $pid) {
                 $stmtPlatform->execute([$id, $pid]);
-                //voert de query uit met de opgegeven parameters
             }
         }
 
@@ -100,5 +91,16 @@ class GameController {
         $this->pdo->prepare("DELETE FROM game_platform WHERE game_id = ?")->execute([$id]);
         $this->pdo->prepare("DELETE FROM games WHERE id = ?")->execute([$id]);
         return true;
+    }
+
+    // FAVORITE TOGGLE
+    public function toggleFavorite($id) {
+        $stmt = $this->pdo->prepare("SELECT favorite FROM games WHERE id = ?");
+        $stmt->execute([$id]);
+        $game = $stmt->fetch(PDO::FETCH_ASSOC);
+        $newFav = $game['favorite'] ? 0 : 1;
+
+        $stmt = $this->pdo->prepare("UPDATE games SET favorite = ? WHERE id = ?");
+        $stmt->execute([$newFav, $id]);
     }
 }
