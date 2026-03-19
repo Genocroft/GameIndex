@@ -1,7 +1,3 @@
--- Database: game_catalogus
-CREATE DATABASE IF NOT EXISTS game_catalogus;
-USE game_catalogus;
-
 -- Tabel: genres
 CREATE TABLE IF NOT EXISTS genres (
     id INT AUTO_INCREMENT PRIMARY KEY,

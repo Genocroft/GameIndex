@@ -2,19 +2,17 @@
 class GameController {
     private $pdo;
 
-    public function __construct($host, $db, $user, $pass) {
-        try {
-            $this->pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass);
-            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            die("Database connection failed: " . $e->getMessage());
-        }
+    public function __construct(PDO $pdo) {
+        $this->pdo = $pdo;
     }
 
     // CREATE
-    public function createGame($title, $genre_id, $release_year, $platform_ids = []) {
-        $stmt = $this->pdo->prepare("INSERT INTO games (title, genre_id, release_year) VALUES (?, ?, ?)");
-        $stmt->execute([$title, $genre_id, $release_year]);
+    public function createGame($titel, $genre_id, $release_datum, $platform_ids = []) {
+        //maakt een nieuwe game //
+        $stmt = $this->pdo->prepare("INSERT INTO games (titel, genre_id, release_datum) VALUES (?, ?, ?)");
+    //voert de query uit met de opgegeven parameters//
+        $stmt->execute([$titel, $genre_id, $release_datum]);
+        // Haal het ID van de nieuw toegevoegde game op
         $game_id = $this->pdo->lastInsertId();
 
         if (!empty($platform_ids)) {
@@ -22,6 +20,7 @@ class GameController {
             foreach ($platform_ids as $pid) {
                 $stmtPlatform->execute([$game_id, $pid]);
             }
+            //als hij leeg is of er is geen game toegevoegd, dan doet hij niks en gaat hij verder naar de volgende stap//
         }
 
         return $game_id;
@@ -30,15 +29,15 @@ class GameController {
     // READ ALL
     public function getAllGames() {
         $stmt = $this->pdo->query("
-            SELECT g.id, g.title, g.release_year, gen.name AS genre
+            SELECT g.id, g.titel, g.release_datum, gen.naam AS genre
             FROM games g
             LEFT JOIN genres gen ON g.genre_id = gen.id
         ");
-        $games = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $games = $stmt->fetchAll();
 
         foreach ($games as &$game) {
             $stmtPlatforms = $this->pdo->prepare("
-                SELECT p.name 
+                SELECT p.naam 
                 FROM platforms p
                 JOIN game_platform gp ON p.id = gp.platform_id
                 WHERE gp.game_id = ?
@@ -53,17 +52,17 @@ class GameController {
     // READ SINGLE
     public function getGameById($id) {
         $stmt = $this->pdo->prepare("
-            SELECT g.id, g.title, g.release_year, gen.name AS genre
+            SELECT g.id, g.titel, g.release_datum, gen.naam AS genre
             FROM games g
             LEFT JOIN genres gen ON g.genre_id = gen.id
             WHERE g.id = ?
         ");
         $stmt->execute([$id]);
-        $game = $stmt->fetch(PDO::FETCH_ASSOC);
+        $game = $stmt->fetch();
         if (!$game) return null;
 
         $stmtPlatforms = $this->pdo->prepare("
-            SELECT p.name 
+            SELECT p.naam 
             FROM platforms p
             JOIN game_platform gp ON p.id = gp.platform_id
             WHERE gp.game_id = ?
@@ -75,16 +74,21 @@ class GameController {
     }
 
     // UPDATE
-    public function updateGame($id, $title, $genre_id, $release_year, $platform_ids = []) {
-        $stmt = $this->pdo->prepare("UPDATE games SET title = ?, genre_id = ?, release_year = ? WHERE id = ?");
-        $stmt->execute([$title, $genre_id, $release_year, $id]);
+    public function updateGame($id, $titel, $genre_id, $release_datum, $platform_ids = []) {
+        //werkt een bestaande game bij//
+        $stmt = $this->pdo->prepare("UPDATE games SET titel = ?, genre_id = ?, release_datum = ? WHERE id = ?");
+        //repareert de query
+        $stmt->execute([$titel, $genre_id, $release_datum, $id]);
+        //verwijdert alle bestaande platform koppelingen voor deze game//
 
-        // Platforms bijwerken
         $this->pdo->prepare("DELETE FROM game_platform WHERE game_id = ?")->execute([$id]);
+        //voegt de nieuwe platform koppelingen toe//
         if (!empty($platform_ids)) {
             $stmtPlatform = $this->pdo->prepare("INSERT INTO game_platform (game_id, platform_id) VALUES (?, ?)");
+            //repareert de query
             foreach ($platform_ids as $pid) {
                 $stmtPlatform->execute([$id, $pid]);
+                //voert de query uit met de opgegeven parameters
             }
         }
 
