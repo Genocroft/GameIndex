@@ -19,7 +19,12 @@ if (isset($_GET['fav'])) {
     exit;
 }
 
-$games = $gameController->getAllGames();
+$favorite = $_GET['favorite'] ?? '';
+if ($favorite == '1') {
+    $games = $gameController->getFavoriteGames();
+} else {
+    $games = $gameController->getAllGames();
+}
 ?>
 
 <h1>Game Index</h1>
@@ -28,7 +33,27 @@ $games = $gameController->getAllGames();
     <button>Nieuwe Game Toevoegen</button>
 </a>
 
+
 <br><br>
+<br><br>
+
+<!-- 👇 HIER je filter formulier -->
+<form method="get" style="margin-bottom:20px;">
+    <select name="favorite" onchange="this.form.submit()">
+        <option value="">Alle games</option>
+        <option value="1" <?= ($favorite=='1')?'selected':'' ?>>
+            Alleen favorieten ⭐
+        </option>
+    </select>
+    <input 
+   <input 
+    type="text" 
+    id="searchInput"
+    placeholder="Zoek op titel..."
+    value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"
+>
+
+</form>
 
 <?php if (!empty($games)): ?>
 <table border="1" cellpadding="8">
@@ -43,7 +68,7 @@ $games = $gameController->getAllGames();
         </tr>
     </thead>
 
-    <tbody>
+    <tbody id="gameTable">
         <?php foreach ($games as $game): ?>
         <tr>
             <td><?= htmlspecialchars($game['id']) ?></td>
@@ -79,3 +104,16 @@ $games = $gameController->getAllGames();
 <?php
 require_once '../templates/footer.php';
 ?>
+<script>
+let timeout = null;
+
+document.getElementById("searchInput").addEventListener("input", function() {
+    let search = this.value;
+
+    fetch("search.php?search=" + search)
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById("gameTable").innerHTML = data;
+        });
+});
+</script>

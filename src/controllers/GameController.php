@@ -103,4 +103,26 @@ class GameController {
         $stmt = $this->pdo->prepare("UPDATE games SET favorite = ? WHERE id = ?");
         $stmt->execute([$newFav, $id]);
     }
+    public function getFavoriteGames() {
+    $stmt = $this->pdo->query("
+        SELECT g.id, g.titel, g.release_datum, g.favorite, gen.naam AS genre
+        FROM games g
+        LEFT JOIN genres gen ON g.genre_id = gen.id
+        WHERE g.favorite = 1
+    ");
+    $games = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($games as &$game) {
+        $stmtPlatforms = $this->pdo->prepare("
+            SELECT p.naam 
+            FROM platforms p
+            JOIN game_platform gp ON p.id = gp.platform_id
+            WHERE gp.game_id = ?
+        ");
+        $stmtPlatforms->execute([$game['id']]);
+        $game['platforms'] = $stmtPlatforms->fetchAll(PDO::FETCH_COLUMN);
+    }
+
+    return $games;
+}
 }
